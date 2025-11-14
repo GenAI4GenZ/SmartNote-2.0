@@ -342,140 +342,89 @@ class ReleaseNoteGenerator:
         structure_type: STRUCTURE_TYPE,
     ):
         # classify the commits
-        df_predictions = self._cmta.analyze(
-            repo_name, project_domain, previous_release, current_release
-        )
-        df_predictions['type'] = df_predictions['type'].fillna('').astype(str)
-
-        # collect dataset for RN generation
-        commit_raw: dict[str, CommitData] = {}
-        tcr_dict, entire_tcr, pr_commits, commit_pr, commit_raw = get_prompt_commits(
-                repo_name=repo_name,
-                prev_release=previous_release,
-                cur_release=current_release,
-                use_prs=group_commits,
-                gh=self._gh,
-                pm=self._pm
+            df_predictions = self._cmta.analyze(
+                repo_name, project_domain, previous_release, current_release
             )
-        
-        if hasattr(self, '_auto_writing_style') and writing_style == 'Expository':
-            # see if we need to switch to another style
-            _all_messages = []
-            for cmt in commit_raw:
-                _all_messages.append(commit_raw[cmt].message.splitlines()[0])
-            for pr in pr_commits.values():
-                _all_messages.append(pr.title)
-            _are_msgs_good = self._pm.are_commit_messages_good(_all_messages)
-            if _are_msgs_good:
-                logger.debug("Messages are good, keeping the Expository style.")
-            else:
-                logger.info("Messages are not good, switching to the Persuasive style.")
-                writing_style = 'Persuasive'
-                self._auto_writing_style = 'Persuasive'
-        
-        use_technical_prompt = writing_style == 'Descriptive'
-        # Release note entry by commit
-        generated_entry: dict[str, ReleaseNoteEntry] = {}
-
-        # Generate release note entry for every commit
-        for sha in tcr_dict:  # For every commit
-            try:
-                _row = df_predictions.loc[sha]
-            except KeyError:
-                logger.info(f"Warning: Missing commit prediction for {sha}")
-                continue
-
-            commit_type: CONVENTIONAL_COMMITS_TYPE = _row['type'] if _row['type'] else _row['label']
-            commit_significance: float = float(_row['includeConfidence'])
-
-            if sha in generated_entry:
-                logger.info(f"Warning: Duplicated commit in release note entry: {sha}")
-                continue
-
-            # ---- Commit message quality scoring (Step 4 integration) ----
-            original_msg = commit_raw[sha].message
-            msg_title = get_commit_msg_title(original_msg)
-
-            try:
-                quality_score, quality_reasons = _commit_scorer.score(msg_title)
-            except Exception as e:
-                logger.warning(f"Commit quality scoring failed for {sha}: {e}")
-                quality_score, quality_reasons = 1.0, []
-
-            # Store quality info in df_predictions for controlled experiments
-            try:
-                df_predictions.loc[sha, 'commit_quality_score'] = float(quality_score)
-                df_predictions.loc[sha, 'commit_quality_reasons'] = ";".join(quality_reasons)
-            except Exception:
-                # do not fail if df_predictions shape is unexpected
-                pass
-            # ------------------------------------------------------------
-
-            if (writing_style == 'Expository') and (structure_type != 'Affected Module'):
-                # Use commit message (possibly rewritten) as the entry summary
-                entry_result = msg_title
-
-                # If low quality, rewrite before using in release notes
-                if quality_score < 0.5:
-                    try:
-                        rewritten = rewrite_commit(msg_title)
-                        if rewritten:
-                            entry_result = rewritten
-                    except Exception as e:
-                        logger.warning(f"Commit rewrite failed for {sha}: {e}")
-
-                associated_prs = commit_pr.get(sha, set())
-                generated_entry[sha] = ReleaseNoteEntry(
-                    [sha],
-                    entry_result,
-                    commit_type,
-                    commit_significance,
-                    associated_prs,
-                    commit_raw[sha].author_date,
+            df_predictions['type'] = df_predictions['type'].fillna('').astype(str)
+    
+            # collect dataset for RN generation
+            commit_raw: dict[str, CommitData] = {}
+            tcr_dict, entire_tcr, pr_commits, commit_pr, commit_raw = get_prompt_commits(
+                    repo_name=repo_name,
+                    prev_release=previous_release,
+                    cur_release=current_release,
+                    use_prs=group_commits,
+                    gh=self._gh,
+                    pm=self._pm
                 )
-            else:
-                sha_combined_tcr = ""
-                _ntokens = 0
-
-                for tcr in tcr_dict[sha]:  
-                    # For every file change in that commit up to the max string or context length.
-                    _str_len = len(sha_combined_tcr) + len(tcr)
-                    _ntokens += self._pm.count_tokens(tcr)
-                    _max_str_len = self._oai_conf.max_string_length
-                    _max_ntokens = max(self._oai_conf.max_model_context_length, self._oai_conf.tpm)
-                    if (_ntokens > _max_ntokens) or (_str_len > _max_str_len):
-                        logger.warning(
-                            f"Commit {sha} patch exceeding max length: "
-                            f"({_str_len}/{_max_str_len} chars, {_ntokens}/{_max_ntokens} tokens)"
-                        )
-                        # This event is unlikely unless there is a massive refactor or project restructing, 
-                        # in which case we argue that this commit shouldn't be part of the release anyway.
-                        break
-                    sha_combined_tcr += tcr
-
-                # Send Commit to OpenAI
-                if len(sha_combined_tcr) != 0:
-                    entry_result: str = ""
-                    if writing_style == 'Expository':
-                        # Even in this branch, Expository style uses (possibly rewritten) commit title
-                        entry_result = msg_title
-                        if quality_score < 0.5:
-                            try:
-                                rewritten = rewrite_commit(msg_title)
-                                if rewritten:
-                                    entry_result = rewritten
-                            except Exception as e:
-                                logger.warning(f"Commit rewrite failed for {sha}: {e}")
-                    else:
-                        entry_result = self.summarize_commit(
-                            sha_combined_tcr,
-                            use_technical_prompt,
-                        )
-                    
+            
+            if hasattr(self, '_auto_writing_style') and writing_style == 'Expository':
+                # see if we need to switch to another style
+                _all_messages = []
+                for cmt in commit_raw:
+                    _all_messages.append(commit_raw[cmt].message.splitlines()[0])
+                for pr in pr_commits.values():
+                    _all_messages.append(pr.title)
+                _are_msgs_good = self._pm.are_commit_messages_good(_all_messages)
+                if _are_msgs_good:
+                    logger.debug("Messages are good, keeping the Expository style.")
+                else:
+                    logger.info("Messages are not good, switching to the Persuasive style.")
+                    writing_style = 'Persuasive'
+                    self._auto_writing_style = 'Persuasive'
+            
+            use_technical_prompt = writing_style == 'Descriptive'
+            # Release note entry by commit
+            generated_entry: dict[str, ReleaseNoteEntry] = {}
+    
+            # Generate release note entry for every commit
+            for sha in tcr_dict:  # For every commit
+                try:
+                    _row = df_predictions.loc[sha]
+                except KeyError:
+                    logger.info(f"Warning: Missing commit prediction for {sha}")
+                    continue
+    
+                commit_type: CONVENTIONAL_COMMITS_TYPE = _row['type'] if _row['type'] else _row['label']
+                commit_significance: float = float(_row['includeConfidence'])
+    
+                if sha in generated_entry:
+                    logger.info(f"Warning: Duplicated commit in release note entry: {sha}")
+                    continue
+    
+                # ---- Commit message quality scoring (Step 4 integration) ----
+                original_msg = commit_raw[sha].message
+                msg_title = get_commit_msg_title(original_msg)
+    
+                try:
+                    quality_score, quality_reasons = _commit_scorer.score(msg_title)
+                except Exception as e:
+                    logger.warning(f"Commit quality scoring failed for {sha}: {e}")
+                    quality_score, quality_reasons = 1.0, []
+    
+                # Store quality info in df_predictions for controlled experiments
+                try:
+                    df_predictions.loc[sha, 'commit_quality_score'] = float(quality_score)
+                    df_predictions.loc[sha, 'commit_quality_reasons'] = ";".join(quality_reasons)
+                except Exception:
+                    # do not fail if df_predictions shape is unexpected
+                    pass
+                # ------------------------------------------------------------
+    
+                if (writing_style == 'Expository') and (structure_type != 'Affected Module'):
+                    # Use commit message (possibly rewritten) as the entry summary
+                    entry_result = msg_title
+    
+                    # If low quality, rewrite before using in release notes
+                    if quality_score < 0.5:
+                        try:
+                            rewritten = rewrite_commit(msg_title)
+                            if rewritten:
+                                entry_result = rewritten
+                        except Exception as e:
+                            logger.warning(f"Commit rewrite failed for {sha}: {e}")
+    
                     associated_prs = commit_pr.get(sha, set())
-                    affected_module: str = ""
-                    if structure_type == 'Affected Module':
-                        affected_module = self.determine_commit_module(sha_combined_tcr)
                     generated_entry[sha] = ReleaseNoteEntry(
                         [sha],
                         entry_result,
@@ -483,10 +432,61 @@ class ReleaseNoteGenerator:
                         commit_significance,
                         associated_prs,
                         commit_raw[sha].author_date,
-                        affected_module,
                     )
-
-        return generated_entry, pr_commits, df_predictions
+                else:
+                    sha_combined_tcr = ""
+                    _ntokens = 0
+    
+                    for tcr in tcr_dict[sha]:  
+                        # For every file change in that commit up to the max string or context length.
+                        _str_len = len(sha_combined_tcr) + len(tcr)
+                        _ntokens += self._pm.count_tokens(tcr)
+                        _max_str_len = self._oai_conf.max_string_length
+                        _max_ntokens = max(self._oai_conf.max_model_context_length, self._oai_conf.tpm)
+                        if (_ntokens > _max_ntokens) or (_str_len > _max_str_len):
+                            logger.warning(
+                                f"Commit {sha} patch exceeding max length: "
+                                f"({_str_len}/{_max_str_len} chars, {_ntokens}/{_max_ntokens} tokens)"
+                            )
+                            # This event is unlikely unless there is a massive refactor or project restructing, 
+                            # in which case we argue that this commit shouldn't be part of the release anyway.
+                            break
+                        sha_combined_tcr += tcr
+    
+                    # Send Commit to OpenAI
+                    if len(sha_combined_tcr) != 0:
+                        entry_result: str = ""
+                        if writing_style == 'Expository':
+                            # Even in this branch, Expository style uses (possibly rewritten) commit title
+                            entry_result = msg_title
+                            if quality_score < 0.5:
+                                try:
+                                    rewritten = rewrite_commit(msg_title)
+                                    if rewritten:
+                                        entry_result = rewritten
+                                except Exception as e:
+                                    logger.warning(f"Commit rewrite failed for {sha}: {e}")
+                        else:
+                            entry_result = self.summarize_commit(
+                                sha_combined_tcr,
+                                use_technical_prompt,
+                            )
+                        
+                        associated_prs = commit_pr.get(sha, set())
+                        affected_module: str = ""
+                        if structure_type == 'Affected Module':
+                            affected_module = self.determine_commit_module(sha_combined_tcr)
+                        generated_entry[sha] = ReleaseNoteEntry(
+                            [sha],
+                            entry_result,
+                            commit_type,
+                            commit_significance,
+                            associated_prs,
+                            commit_raw[sha].author_date,
+                            affected_module,
+                        )
+    
+            return generated_entry, pr_commits, df_predictions
 
     @logger.catch(reraise=True)
     def generate(
