@@ -50,7 +50,7 @@ def _ensure_cuda_devices(cuda_devices: Union[str, List[str], None] = None):
         if isinstance(cuda_devices, list):
             cuda_devices = ','.join([str(d) for d in cuda_devices])
         os.environ['CUDA_VISIBLE_DEVICES'] = str(cuda_devices)
-    
+
     import torch
     if torch.cuda.is_available():
         _torch_device = torch.device('cuda')
@@ -62,10 +62,10 @@ def _ensure_cuda_devices(cuda_devices: Union[str, List[str], None] = None):
 
     return _torch_device
 
-def init_env(name='', 
-         cuda_devices: Union[str, List[str], None] = None, 
+def init_env(name='',
+         cuda_devices: Union[str, List[str], None] = None,
          seed=19260817):
-    
+
     global settings
 
     # ensure paths
@@ -87,19 +87,19 @@ def init_env(name='',
         os.environ['HTTPS_PROXY'] = settings.proxy.https
     except (KeyError, AttributeError):
         pass
-    
+
     # cuda devices
     settings.TORCH_DEVICE = _ensure_cuda_devices(cuda_devices)
     # mute tokenizers fork warning
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-    
+
     # seed everything
     settings.SEED = seed
     import numpy as np
     import torch
     np.random.seed(settings.SEED)
     torch.manual_seed(settings.SEED)
-    
+
     # check tokens
     _tokens_list = [settings.github.token]
     if hasattr(settings.github, 'tokens'):
