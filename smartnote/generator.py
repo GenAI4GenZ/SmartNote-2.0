@@ -331,7 +331,7 @@ class ReleaseNoteGenerator:
 
         return result
 
-        def collect_dataset(
+    def collect_dataset(
         self,
         repo_name: str,
         previous_release: str,
