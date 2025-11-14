@@ -8,13 +8,15 @@ import re
 from dacite import from_dict
 import pandas as pd
 
+
 from .config import settings, init_env
 from .dtypes import CONVENTIONAL_COMMITS_TYPE, PROJECT_DOMAIN_TYPE, STRUCTURE_TYPE, WRITING_STYLE_TYPE
 from .dtypes import ReleaseNoteEntry, ReleaseNotePrEntry, ReleaseNoteCommitEntry, OpenAIConfig, CommitData
 from .commit_analyzer import CommitAnalyzer
 from .collector import get_prompt_commits
 from .prompts_manager import PromptsManager
-
+from .commit_quality import CommitQualityScorer
+from .commit_rewriter import rewrite_commit
 
 DEFAULT_WRITING_STYLE: Dict[PROJECT_DOMAIN_TYPE, WRITING_STYLE_TYPE] = {
     "System": "Persuasive",
@@ -22,6 +24,7 @@ DEFAULT_WRITING_STYLE: Dict[PROJECT_DOMAIN_TYPE, WRITING_STYLE_TYPE] = {
     "Library": "Expository",
     "Application": "Expository",
 }
+
 
 DEFAULT_COMMIT_CATE_TO_EMOJI: Dict[CONVENTIONAL_COMMITS_TYPE, str] = {
     "build": "📦",
@@ -36,6 +39,12 @@ DEFAULT_COMMIT_CATE_TO_EMOJI: Dict[CONVENTIONAL_COMMITS_TYPE, str] = {
     "docs": "📚",
     "revert": "⏪"
 }
+
+_commit_scorer = CommitQualityScorer(
+    min_len=6,
+    max_abbrev_ratio=0.45,
+    issue_bonus=0.12,
+)
 
 # DEFAULT_COMMIT_CATE_PRIORITY: Dict[CONVENTIONAL_COMMITS_TYPE, int] = {
 #     "build": 1,
@@ -322,7 +331,7 @@ class ReleaseNoteGenerator:
 
         return result
 
-    def collect_dataset(
+        def collect_dataset(
         self,
         repo_name: str,
         previous_release: str,
@@ -383,8 +392,37 @@ class ReleaseNoteGenerator:
                 logger.info(f"Warning: Duplicated commit in release note entry: {sha}")
                 continue
 
+            # ---- Commit message quality scoring (Step 4 integration) ----
+            original_msg = commit_raw[sha].message
+            msg_title = get_commit_msg_title(original_msg)
+
+            try:
+                quality_score, quality_reasons = _commit_scorer.score(msg_title)
+            except Exception as e:
+                logger.warning(f"Commit quality scoring failed for {sha}: {e}")
+                quality_score, quality_reasons = 1.0, []
+
+            # Store quality info in df_predictions for controlled experiments
+            try:
+                df_predictions.loc[sha, 'commit_quality_score'] = float(quality_score)
+                df_predictions.loc[sha, 'commit_quality_reasons'] = ";".join(quality_reasons)
+            except Exception:
+                # do not fail if df_predictions shape is unexpected
+                pass
+            # ------------------------------------------------------------
+
             if (writing_style == 'Expository') and (structure_type != 'Affected Module'):
-                entry_result = get_commit_msg_title(commit_raw[sha].message)
+                # Use commit message (possibly rewritten) as the entry summary
+                entry_result = msg_title
+
+                # If low quality, rewrite before using in release notes
+                if quality_score < 0.5:
+                    try:
+                        rewritten = rewrite_commit(msg_title)
+                        if rewritten:
+                            entry_result = rewritten
+                    except Exception as e:
+                        logger.warning(f"Commit rewrite failed for {sha}: {e}")
 
                 associated_prs = commit_pr.get(sha, set())
                 generated_entry[sha] = ReleaseNoteEntry(
@@ -419,7 +457,15 @@ class ReleaseNoteGenerator:
                 if len(sha_combined_tcr) != 0:
                     entry_result: str = ""
                     if writing_style == 'Expository':
-                        entry_result = get_commit_msg_title(commit_raw[sha].message)
+                        # Even in this branch, Expository style uses (possibly rewritten) commit title
+                        entry_result = msg_title
+                        if quality_score < 0.5:
+                            try:
+                                rewritten = rewrite_commit(msg_title)
+                                if rewritten:
+                                    entry_result = rewritten
+                            except Exception as e:
+                                logger.warning(f"Commit rewrite failed for {sha}: {e}")
                     else:
                         entry_result = self.summarize_commit(
                             sha_combined_tcr,
