@@ -717,10 +717,41 @@ class ReleaseNoteGenerator:
             f.write(formatted_rn)
         logger.info(f"Release note generated: {_results_path / 'release_note.md'}")
 
+        # Write details.txt for evaluation
+        details_content = (
+            f"-- {repo_name.replace('/', '/')}\n"
+            f"--previous-release {previous_release} --current-release {current_release}"
+        )
+        with open(_results_path / 'details.txt', 'w') as f:
+            f.write(details_content)
+        logger.info(f"Details file written: {_results_path / 'details.txt'}")
+
         # remove the logger sink
         logger.remove(_logger_sinkid)
 
         return formatted_rn
+
+def run_evaluation(results_path: str) -> dict:
+    """
+    Run quantitative evaluation on generated release notes.
+    
+    Args:
+        results_path: Path to the directory containing release_note.md and details.txt
+        
+    Returns:
+        Dictionary with evaluation metrics
+    """
+    # Import here to avoid circular dependencies
+    sys.path.insert(0, str(Path(__file__).parent.parent / 'evaluation'))
+    from quant_eval import eval_path
+    
+    try:
+        df_results = eval_path(results_path)
+        logger.info(f"Evaluation complete. Results:\n{df_results.to_string()}")
+        return df_results.to_dict()
+    except Exception as e:
+        logger.error(f"Evaluation failed: {e}")
+        raise
 
 
 
@@ -779,3 +810,14 @@ if __name__ == '__main__':
     )
 
     print(rn)
+
+    # Run evaluation if requested
+    if args.evaluate and rn:
+        results_path = get_path('results') / f"{args.repo_url.split('/')[-1]}_{args.current_release}"
+        try:
+            eval_results = run_evaluation(str(results_path))
+            print("\n====== QUANTITATIVE EVALUATION RESULTS ======")
+            for key, value in eval_results.items():
+                print(f"{key}: {value}")
+        except Exception as e:
+            logger.error(f"Evaluation failed: {e}")
