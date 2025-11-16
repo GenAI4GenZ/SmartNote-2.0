@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, get_args
 from loguru import logger
 from github import Github
 from github.GithubException import GithubException, UnknownObjectException
@@ -410,8 +410,8 @@ class ReleaseNoteGenerator:
                     # do not fail if df_predictions shape is unexpected
                     pass
                 # ------------------------------------------------------------
-    
-                if isinstance(writing_style, WRITING_STYLE_TYPE) and (structure_type != 'Affected Module'):
+
+                if isinstance(writing_style, str) and writing_style in get_args(WRITING_STYLE_TYPE) and (structure_type != 'Affected Module'):
                     # Use commit message (possibly rewritten) as the entry summary
                     entry_result = msg_title
     
@@ -456,7 +456,7 @@ class ReleaseNoteGenerator:
                     # Send Commit to OpenAI
                     if len(sha_combined_tcr) != 0:
                         entry_result: str = ""
-                        if isinstance(writing_style, WRITING_STYLE_TYPE):
+                        if isinstance(writing_style, str) and writing_style in get_args(WRITING_STYLE_TYPE):
                             # Even in this branch, Expository style uses (possibly rewritten) commit title
                             entry_result = msg_title
                             if quality_score < 0.5:
