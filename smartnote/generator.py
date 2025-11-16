@@ -772,6 +772,7 @@ if __name__ == '__main__':
     argparser.add_argument("--structure-type", type=str, required=False, help="Structure type", default="Change Type")
     argparser.add_argument("--min-significance", type=float, required=False, help="Minimum significance score of commits", default=0.15)
     argparser.add_argument("--show-significance", required=False, help="Show the significance score in the generated release note", default=False, action='store_true')
+    argparser.add_argument("--evaluate", required=False, help="Run quantitative evaluation after generation", default=False, action='store_true')
     args = argparser.parse_args()
 
     # assert args.project_domain in settings.categories.project_domains, \
