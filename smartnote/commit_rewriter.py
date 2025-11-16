@@ -76,8 +76,7 @@ def rewrite_commit(message: str, diff_context: Optional[str] = None, style_hint:
         if not text:
             return message.strip()
         logger.info(f"Rewritten commit message: {text.strip()}")
-        quality_score, reasons = _commit_scorer.score(text)
-        logger.info(f"Rewritten commit message quality score: {quality_score:.2f}, reasons: {reasons}")
+        _commit_scorer.score(text)
         return text.strip().splitlines()[0][:200]
     except Exception as e:
         logger.error(f"Error rewriting commit message: {e}")
