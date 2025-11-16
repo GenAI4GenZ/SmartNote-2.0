@@ -34,6 +34,7 @@ COPY ./models/gte_xgb_flt_model.json /app/models/
 # Copy required files to the final image
 COPY ./settings.toml config.py /app/
 COPY ./smartnote/ /app/smartnote/
+COPY ./evaluation/ /app/evaluation/
 
 # Require environment variables
 ENV SMARTNOTE_GITHUB__TOKEN=""
