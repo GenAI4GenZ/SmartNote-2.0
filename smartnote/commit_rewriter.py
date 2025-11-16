@@ -11,6 +11,7 @@ import os
 import requests
 import json
 from typing import Optional
+from loguru import logger
 
 OPENAI_API_KEY = os.environ.get("SMARTNOTE_OPENAI__API_KEY") or os.environ.get("OPENAI_API_KEY")
 OPENAI_BASE = os.environ.get("SMARTNOTE_OPENAI__BASE_URL", "https://api.openai.com/v1")
@@ -21,6 +22,7 @@ def rewrite_commit(message: str, diff_context: Optional[str] = None, style_hint:
     Rewrites commit message into a concise, informative, imperative-style message.
     `style_hint` can be "user-facing", "developer", "short", etc.
     """
+    logger.info(f"Rewriting commit message: {message.strip()}")
     if not OPENAI_API_KEY:
         # fallback: simple heuristic rewrite
         base = message.strip()
@@ -65,7 +67,9 @@ def rewrite_commit(message: str, diff_context: Optional[str] = None, style_hint:
                 text = ch.get("text", "")
         if not text:
             return message.strip()
+        logger.info(f"Rewritten commit message: {text.strip()}")
         return text.strip().splitlines()[0][:200]
     except Exception as e:
+        logger.error(f"Error rewriting commit message: {e}")
         # degrade gracefully
         return message.strip()

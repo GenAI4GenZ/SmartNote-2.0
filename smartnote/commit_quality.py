@@ -9,6 +9,7 @@ Returns:
 
 import re
 from typing import Tuple, List, Dict
+from loguru import logger
 
 COMMON_VAGUE_TOKENS = set([
     "wip", "update", "updated", "fix", "fixes", "minor", "temp", "tmp", "test", "tests",
@@ -36,6 +37,7 @@ class CommitQualityScorer:
         self.issue_bonus = issue_bonus
 
     def score(self, message: str, diff_summary: str = "", files_changed: List[str] = None) -> Tuple[float, List[str]]:
+        logger.info(f"Scoring commit message: {message.strip()}")
         reasons = []
         msg = (message or "").strip()
         if not msg:
@@ -72,6 +74,8 @@ class CommitQualityScorer:
         raw = length_score - (0.6 * vague_penalty) - abbr_penalty + issue_bonus + imperative_bonus + punctuation_bonus
         score = max(0.0, min(1.0, raw))
 
+        logger.info(f"Commit message score: {score:.2f}")
+
         # produce reasons
         if token_count < self.min_len:
             reasons.append("short")
@@ -86,6 +90,7 @@ class CommitQualityScorer:
 
         # filter out duplicates and return
         reasons = sorted(set(reasons))
+        logger.info(f"Commit message scoring reasons: {reasons}")
         return score, reasons
 
     def is_low_quality(self, message: str, diff_summary: str = "", files_changed: List[str] = None, threshold: float = 0.5) -> bool:
