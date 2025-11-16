@@ -741,9 +741,7 @@ def run_evaluation(results_path: str) -> dict:
     Returns:
         Dictionary with evaluation metrics
     """
-    # Import here to avoid circular dependencies
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'evaluation'))
-    from quant_eval import eval_path
+    from ..evaluation.quant_eval import eval_path
     
     try:
         df_results = eval_path(results_path)
