@@ -411,7 +411,7 @@ class ReleaseNoteGenerator:
                     pass
                 # ------------------------------------------------------------
     
-                if (writing_style == 'Expository') and (structure_type != 'Affected Module'):
+                if isinstance(writing_style, WRITING_STYLE_TYPE) and (structure_type != 'Affected Module'):
                     # Use commit message (possibly rewritten) as the entry summary
                     entry_result = msg_title
     
@@ -456,7 +456,7 @@ class ReleaseNoteGenerator:
                     # Send Commit to OpenAI
                     if len(sha_combined_tcr) != 0:
                         entry_result: str = ""
-                        if writing_style == 'Expository':
+                        if isinstance(writing_style, WRITING_STYLE_TYPE):
                             # Even in this branch, Expository style uses (possibly rewritten) commit title
                             entry_result = msg_title
                             if quality_score < 0.5:
