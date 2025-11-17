@@ -47,6 +47,7 @@ def rewrite_commit(message: str, diff_context: Optional[str] = None, style_hint:
         "- Prefer simple verbs such as 'add', 'remove', 'fix', 'use', 'update', or 'improve'.\n"
         "- Keep at most one or two important technical entities (for example, main module, feature, or API name).\n"
         "- Use clear, neutral language appropriate for developers.\n"
+        "- Keep the commit message type (e.g., fix, feat, docs) intact.\n"
     )
 
     if style_hint:
