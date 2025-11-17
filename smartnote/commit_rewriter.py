@@ -39,18 +39,32 @@ def rewrite_commit(message: str, diff_context: Optional[str] = None, style_hint:
             return "WIP: work in progress"
         return base
 
-    prompt = (f"Rewrite the following git commit message to be a concise, informative, imperative-style commit message suitable for release notes.\n"
-              f"Commit: '''{message}'''\n")
-    if diff_context:
-        prompt += f"Diff context (summary): '''{diff_context}'''\n"
+    prompt = (
+        "Rewrite the following git commit message as a single, concise, imperative-style line suitable for a release note.\n"
+        "Requirements:\n"
+        "- Use one short, direct sentence (ideally under 15 words).\n"
+        "- Avoid nested clauses (no sentences that chain multiple 'which', 'that', or 'in order to').\n"
+        "- Prefer simple verbs such as 'add', 'remove', 'fix', 'use', 'update', or 'improve'.\n"
+        "- Keep at most one or two important technical entities (for example, main module, feature, or API name).\n"
+        "- Use clear, neutral language appropriate for developers.\n"
+    )
+
     if style_hint:
-        prompt += f"Style hint: {style_hint}\n"
-    prompt += ("\nRules:\n"
-               " - Use imperative verb at the start (Add, Fix, Remove, Update, Refactor, Improve).\n"
-               " - Keep it short (<= 120 chars) but descriptive.\n"
-               " - If there's an issue/PR reference, keep it (e.g., #123).\n"
-               " - If it's a WIP or a trivial change, mark as 'chore' or 'doc' accordingly.\n\n"
-               "Return only the rewritten commit header (no explanation).")
+        prompt += f"Style preference: {style_hint}.\n"
+
+    if diff_context:
+        prompt += (
+            "You may use the following limited context to clarify the message, "
+            "but do not describe low-level details or long file lists:\n"
+            f"Context:\n'''{diff_context}'''\n"
+        )
+
+    prompt += (
+        "\nCommit message:\n"
+        f"'''{message}'''\n"
+        "Return only the rewritten commit message as a single line without quotes or commentary."
+    )
+
 
     # Call Chat Completions (Chat / Conversations)
     url = f"{OPENAI_BASE.rstrip('/')}/chat/completions"

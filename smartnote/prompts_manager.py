@@ -112,14 +112,15 @@ class PromptsManager:
                     "You will be provided with commit details (delimited with XML tags) and file changes "
                     "(delimited with XML tags) outlining the changes of a commit. "
                     + technical_detail_prompt
-                    + "Use the following step-by-step instructions to respond to user input. Prefix each summary with the step number.\n\n"
-                    "Step 1 - Summarize the changes into a short paragraph (about 50-100 words) so that it can seamlessly be included in a release note document.\n"
-                    "Step 2 - Rewrite the summary from Step 1, removing any prefixes.\n"
-                    "Step 3 - Rewrite the summary from Step 2 so that it is not a list.\n"
-                    "Step 4 - Rewrite the summary from Step 3, removing references to affected files.\n"
-                    "Step 5 - Rewrite the summary from Step 4, removing references to dependency updates.\n"
-                    "Step 6 - Rewrite the summary from Step 5, removing references to version changes and updates.\n"
-                    "\n\nOnly output the summary from Step 6."
+                    + "Write a concise description suitable for inclusion in a software release note aimed at software developers.\n\n"
+                    "Guidelines:\n"
+                    "- Focus on what changed and why it matters; omit low-level implementation noise such as long file or line lists.\n"
+                    "- Use one or two short, direct sentences (ideally under 20 words each).\n"
+                    "- Avoid nested clauses (for example, avoid chaining multiple 'which', 'that', or 'in order to').\n"
+                    "- Prefer simple verbs such as 'add', 'remove', 'fix', 'use', 'update', or 'improve' instead of complex alternatives.\n"
+                    "- Include at most one or two important technical entities (for example, the main module, feature, or API name).\n"
+                    "- Use clear, neutral language and avoid marketing-style wording.\n\n"
+                    "Return only the final description. Do not include headings, bullet markers, or any extra commentary."
                 ),
             },
             {"role": "user", "content": tcr},
@@ -148,19 +149,25 @@ class PromptsManager:
                 "role": "system",
                 "content": str(
                     "You will be provided with pull request details (delimited with XML tags) and "
-                    "a list of summarized commits (delimited with XML tags) outlining the changes made in a pull request. "
+                    "a list of summarized commits (delimited with XML tags), each prefixed with a numeric significance score in [0, 1]. "
                     + technical_detail_prompt
-                    + "Each commit summary is prefixed with a number (prefixed with a dash and delimited with square brackets) between 0 and 1 which indicate the significance of the commit. The closer the number is to 1, the more important the commit. "
-                    'For example, "- [0.5] Added a new feature." 0.5 in this case signifies that the entry is moderately significant.\n\n'
-                    "Use the following step-by-step instructions to respond to user input. Prefix each summary with the step number.\n\n"
-                    "Step 1 - Summarize the details and list of summarized commits into a short paragraph (about 100-200 words) so that it can seamlessly be included in a release note document.\n"
-                    "Step 2 - Rewrite the summary from Step 1, removing insignificant commits.\n"
-                    "Step 3 - Rewrite the summary from Step 2 so that it is not a list.\n"
-                    "Step 4 - Rewrite the summary from Step 3, removing references to affected files.\n"
-                    "Step 5 - Rewrite the summary from Step 4, removing references to dependency updates.\n"
-                    "Step 6 - Rewrite the summary from Step 5, removing references to version changes and updates.\n"
-                    "Step 7 - Rewrite the summary from Step 6, removing any prefixes.\n"
-                    "\n\nOnly output the summary from Step 7."
+                    + "Your task is to produce a short PR-level summary suitable for a release note aimed at software developers.\n\n"
+                    "Interpretation of significance:\n"
+                    "- Higher scores indicate more important commits; very low scores indicate minor or cosmetic changes.\n\n"
+                    "Internal reasoning steps (do not enumerate them in the output):\n"
+                    "1. Identify the main themes and user-visible changes using the PR details and higher-significance commits.\n"
+                    "2. De-emphasize or omit very low-significance commits unless they are critical for understanding the change.\n"
+                    "3. Remove references to specific files, line numbers, and dependency/version bumps unless they are central to the change.\n"
+                    "4. Draft a short PR-level summary capturing what changed and why it matters.\n"
+                    "5. Rewrite the draft so that all sentences are short, direct, and easy to read.\n\n"
+                    "Style and readability requirements for the final output:\n"
+                    "- Use 2-4 short, direct sentences (fewer is fine for very small PRs).\n"
+                    "- Ideally keep each sentence under 20 words.\n"
+                    "- Avoid nested clauses (for example, avoid sentences that chain multiple 'which', 'that', or 'in order to').\n"
+                    "- Prefer simple verbs such as 'add', 'remove', 'fix', 'use', 'update', or 'improve' instead of complex alternatives.\n"
+                    "- Mention only the most important technical entities (such as key features, modules, or APIs). Do not list many internal identifiers.\n"
+                    "- Use clear, neutral, technical language; avoid marketing or exaggerated claims.\n\n"
+                    "Return only the final PR-level summary as plain text. Do not include headings, bullet markers, or step labels."
                 ),
             },
             {
@@ -189,10 +196,20 @@ class PromptsManager:
             {
                 "role": "system",
                 "content": str(
-                    f"You will be provided with a release note document (formatted in markdown) outlining the changes in a {project_domain} project ({DOMAIN_DESCRIPTION[project_domain]}).\n\n"
+                    f"You will be provided with a release note document (formatted in markdown) for a {project_domain} project "
+                    f"({DOMAIN_DESCRIPTION[project_domain]}).\n\n"
                     f"Rewrite and reorder each list item so as to {DOMAIN_HINT[project_domain]}. "
-                    "You can summarize and combine long list entries for conciseness but do not change the formatting of the document or add a prefix. For example, do not change or add new headings. "
-                    "Most importantly, do not remove any links.\n\n"
+                    "You may lightly edit wording for clarity and tone, and you may reorder list items and headings if it improves organisation.\n\n"
+                    "Structural constraints (must be respected):\n"
+                    "- Do NOT add or remove headings; keep the existing heading hierarchy and bullet structure.\n"
+                    "- Do NOT remove any bullet items or links.\n"
+                    "- Do NOT change markdown formatting (for example, keep bullet markers and indentation intact).\n\n"
+                    "Style and readability requirements:\n"
+                    "- Use short, direct sentences (ideally under 20 words per sentence).\n"
+                    "- Avoid nested clauses (for example, avoid sentences that chain multiple 'which', 'that', or 'in order to').\n"
+                    "- Prefer simple verbs such as 'add', 'remove', 'fix', 'use', 'update', or 'improve' instead of complex alternatives.\n"
+                    "- Preserve important technical entities (names of features, modules, APIs), but avoid listing many low-level internal identifiers.\n"
+                    "- Use clear, neutral language appropriate for developers reading release notes.\n\n"
                     + category_prompt
                 ),
             },
@@ -208,9 +225,16 @@ class PromptsManager:
             {
                 "role": "system",
                 "content": str(
-                    "You will be provided with an entry in a release note document (formatted in markdown). "
-                    "Analyze the change and rewrite it for conciseness. For example, remove sentence openers and vague or irrelevant statement.\n\n"
-                    "Do not change the formatting of or add a prefix."
+                    "You will be provided with an entry from a release note document (formatted in markdown). "
+                    "Analyze the entry and rewrite it for conciseness while preserving all information and links that are useful to readers.\n\n"
+                    "Guidelines:\n"
+                    "- Remove redundant phrases, filler, and vague sentence openers (such as 'This change', 'In this commit', or 'It aims to').\n"
+                    "- Keep all links and any essential technical entities.\n"
+                    "- Use one or two short, direct sentences (ideally under 20 words each).\n"
+                    "- Avoid nested clauses (for example, avoid sentences that chain multiple 'which', 'that', or 'in order to').\n"
+                    "- Prefer simple verbs such as 'add', 'remove', 'fix', 'use', 'update', or 'improve' instead of complex alternatives.\n"
+                    "- Use clear, neutral language appropriate for developers reading release notes.\n\n"
+                    "Do not change the markdown structure or add a prefix. "
                     "Most importantly, do not remove any links."
                 ),
             },
