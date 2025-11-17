@@ -180,6 +180,43 @@ def get_commit_msg_title(message: str) -> str:
         return message[:newline_pos].strip()
     return message[:72].strip()
 
+def build_diff_summary(tcr_parts: list[str], max_files: int = 5) -> str:
+    """
+    Build a short, high-level summary of the diff for a commit, based only on
+    filenames in the tag comparison results (TCR). This is used as optional
+    context when rewriting low-quality commit messages.
+    """
+    if not tcr_parts:
+        return ""
+
+    filenames: list[str] = []
+    for part in tcr_parts:
+        for line in part.splitlines():
+            line = line.strip()
+            # Lines look like: "filename: path/to/file"
+            if line.startswith("filename:"):
+                _, _, rest = line.partition("filename:")
+                fname = rest.strip()
+                if fname and fname not in filenames:
+                    filenames.append(fname)
+                    if len(filenames) >= max_files:
+                        break
+        if len(filenames) >= max_files:
+            break
+
+    if not filenames:
+        return ""
+
+    if len(filenames) == 1:
+        return f"Changes in file {filenames[0]}."
+    if len(filenames) <= max_files:
+        joined = ", ".join(filenames)
+        return f"Changes in files: {joined}."
+
+    visible = ", ".join(filenames[:max_files])
+    remaining = len(filenames) - max_files
+    return f"Changes in files: {visible}, and {remaining} more."
+
 # def generate_rn_entries_from_commit_entries(
 #     self,
 #     commit_pr: dict[str, ReleaseNoteCommitEntry],
@@ -395,6 +432,9 @@ class ReleaseNoteGenerator:
                 # ---- Commit message quality scoring (Step 4 integration) ----
                 original_msg = commit_raw[sha].message
                 msg_title = get_commit_msg_title(original_msg)
+
+                # Build a short diff summary from TCR to help commit rewriting
+                diff_summary = build_diff_summary(tcr_dict.get(sha, []))
     
                 try:
                     quality_score, quality_reasons = _commit_scorer.score(msg_title)
@@ -418,7 +458,7 @@ class ReleaseNoteGenerator:
                     # If low quality, rewrite before using in release notes
                     if quality_score < 0.5:
                         try:
-                            rewritten = rewrite_commit(msg_title)
+                            rewritten = rewrite_commit(msg_title, diff_context=diff_summary)
                             if rewritten:
                                 entry_result = rewritten
                         except Exception as e:
@@ -461,7 +501,7 @@ class ReleaseNoteGenerator:
                             entry_result = msg_title
                             if quality_score < 0.5:
                                 try:
-                                    rewritten = rewrite_commit(msg_title)
+                                    rewritten = rewrite_commit(msg_title, diff_context=diff_summary)
                                     if rewritten:
                                         entry_result = rewritten
                                 except Exception as e:
