@@ -768,11 +768,23 @@ if __name__ == '__main__':
 
     # Run evaluation if requested
     if args.evaluate and rn:
-        results_path = get_path('results') / f"{args.repo_url.split('/')[-1]}_{args.current_release}"
-        try:
-            eval_results = run_evaluation(str(results_path))
-            print("\n====== QUANTITATIVE EVALUATION RESULTS ======")
-            for key, value in eval_results.items():
-                print(f"{key}: {value}")
-        except Exception as e:
-            logger.error(f"Evaluation failed: {e}")
+        import glob as glob_module
+        from .config import get_path
+        
+        # Find the most recent results directory
+        results_base = get_path('results')
+        if results_base.exists():
+            latest_dir = max(
+                glob_module.glob(str(results_base / '*')),
+                key=os.path.getctime,
+                default=None
+            )
+            if latest_dir:
+                try:
+                    eval_results = run_evaluation(str(latest_dir))
+                except Exception as e:
+                    logger.error(f"Evaluation failed: {e}")
+            else:
+                logger.warning("No results directory found for evaluation")
+        else:
+            logger.warning(f"Results directory not found: {results_base}")
