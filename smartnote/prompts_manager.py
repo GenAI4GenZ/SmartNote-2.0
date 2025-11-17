@@ -192,6 +192,7 @@ class PromptsManager:
                     f"You will be provided with a release note document (formatted in markdown) outlining the changes in a {project_domain} project ({DOMAIN_DESCRIPTION[project_domain]}).\n\n"
                     f"Rewrite and reorder each list item so as to {DOMAIN_HINT[project_domain]}. "
                     "You can summarize and combine long list entries for conciseness but do not change the formatting of the document or add a prefix. For example, do not change or add new headings. "
+                    "The end-users are primarily both developers and end users of the software so make sure the language is clear and neutral. "
                     "Most importantly, do not remove any links.\n\n"
                     + category_prompt
                 ),
@@ -211,6 +212,7 @@ class PromptsManager:
                     "You will be provided with an entry in a release note document (formatted in markdown). "
                     "Analyze the change and rewrite it for conciseness. For example, remove sentence openers and vague or irrelevant statement.\n\n"
                     "Do not change the formatting of or add a prefix."
+                    "The end-users are primarily both developers and end users of the software so make sure the language is clear and neutral. "
                     "Most importantly, do not remove any links."
                 ),
             },
@@ -248,6 +250,7 @@ class PromptsManager:
                     "Analyze the change and rewrite it, making sure that all references to names are using the new name. "
                     "For example, if a function or variable was added and later renamed, the new name should be used and there should be no mention of it being renamed. \n\n"
                     "Do not change the formatting of the document or add a prefix. For example, do not change or add new headings."
+                    "The end-users are primarily both developers and end users of the software so make sure the language is clear and neutral. "
                     "Most importantly, do not remove any links."
                 ),
             },
@@ -268,6 +271,7 @@ class PromptsManager:
                     "For example, if a function or variable was added and then later removed in the same commit or PR then it shouldn't be mentioned. "
                     "Similarly, if a function or variable was added in the same commit or PR and later changed, only information relevant to the latest state should be retained..\n\n"
                     "Do not change the formatting of the document or add a prefix. For example, do not change or add new headings."
+                    "The end-users are primarily both developers and end users of the software so make sure the language is clear and neutral. "
                     "Most importantly, do not remove any links."
                 ),
             },
@@ -364,6 +368,7 @@ class PromptsManager:
                     "Normally, breaking changes and new features, bug fixes, and enhancements are considered the most important. "
                     "Document changes, dependency updates, and version changes are considered less important."
                     "\n\nDo not format the response in any way. "
+                    "The end-users are primarily both developers and end users of the software so make sure the language is clear and neutral."
                     "Do not add new categories. Do not remove any links. "
                     "Do not change the formatting of the document or add a prefix. "
                 ),
