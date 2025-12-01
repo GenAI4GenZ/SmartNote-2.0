@@ -73,7 +73,9 @@ SmartNote is designed to work with any LLM that has a compatible OpenAI API back
 
 ## 2.5. Usage
 
-The `smartnote` module now supports a simple CLI interface. Below is an example of how to use the CLI to generate release notes for QuestDB between versions 8.0.3 and 8.1.0.
+### 2.5.1 Command Line Interface
+
+The `smartnote` module supports a CLI interface. Below is an example of how to use the CLI to generate release notes for QuestDB between versions 8.0.3 and 8.1.0.
 
 ```bash
 pixi run ipython --pdb -m smartnote.generator -- questdb/questdb --previous-release 8.0.3 --current-release 8.1.0 --project-domain System --min-significance 0.15 --writing-style "Automatic" --structure-type "Change Type" --group-commits --show-significance
@@ -82,6 +84,34 @@ pixi run ipython --pdb -m smartnote.generator -- questdb/questdb --previous-rele
 Note: Remove the `group-commits` flag to disable it. Similarly, remove `show-significance` flag to disable it.
 
 We suggest you run the command above in an interactive python shell to debug any issues that may arise. When an exception is raised, run `interact` to enter the interactive mode and inspect the variables.
+
+### 2.5.2 Web Dashboard (Streamlit Demo)
+
+For a user-friendly experience, use the included Streamlit web dashboard:
+
+**Prerequisites:**
+- Docker Desktop installed and running
+- Python 3.8+ with `streamlit>=1.28.0`
+
+**Setup:**
+```bash
+# Install streamlit
+pip install streamlit
+
+# Configure your API keys
+cp demo_config.template.py demo_config.py
+# Edit demo_config.py with your GITHUB_TOKEN and OPENAI_API_KEY
+
+# Run the dashboard
+streamlit run demo_app.py
+```
+
+The dashboard provides:
+- 🎯 Repository selection from a predefined list
+- 📝 Version input (previous and current release)
+- 🚀 One-click release note generation using Docker
+- 📥 Download generated notes as markdown files
+- ⚙️ Advanced options (commit grouping, significance display, GPU usage)
 
 ## 2.6. Command Line Arguments
 
