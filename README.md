@@ -1,5 +1,19 @@
 # 1. About
-SmartNote is a release note generation tool aimed at generating release notes **personalized** to your **project domain** and **audience type**. It does this by providing configurability and utilizating what is colloquially referred to as AI. More specifically, SmartNote utilizes **Supervised Learning** for classification and prioirity scoring and **LLMs (Large Language Models)** for summarization and formatting.
+SmartNote 2.0 is an enhanced release note generation system designed to overcome the major shortcomings of existing automated release-note tools. It produces accurate, domain-aware, and concise release notes by integrating commit semantics, code context, and improved readability modeling.
+
+It automates release-note generation through a hybrid approach:
+
+Supervised Models (XGBoost):
+Improve project domain classification by combining README text, commit semantics, and code-context features.
+
+LLM-Powered Modules (GPT-4o):
+Rephrase weak or low-quality commit messages and generate structured, audience-focused release notes.
+
+Token-Efficient Summarization:
+Reduces verbosity while preserving essential technical detail.
+
+Developer-Centric Readability Scoring:
+Introduces a new two-dimensional readability metric designed specifically for technical release notes.
 
 ## 1.1 Docker Image
 For ease of use, we provide a docker image with all the dependencies installed. Simply call the docker command with the desired variables. Below we provide an example and the environment variable information. For more information please see the README.md file in the replication folder.
