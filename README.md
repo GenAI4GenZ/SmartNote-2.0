@@ -107,31 +107,39 @@ We suggest you run the command above in an interactive python shell to debug any
 
 ### 2.5.2 Web Dashboard (Streamlit Demo)
 
-For a user-friendly experience, use the included Streamlit web dashboard:
+For a user-friendly experience, use the included Streamlit web dashboard that provides a graphical interface for generating release notes.
 
 **Prerequisites:**
-- Docker Desktop installed and running
+- Docker installed and running
 - Python 3.8+ with `streamlit>=1.28.0`
+- Docker image: `ghcr.io/genai4genz/smartnote:latest` (public, no authentication required)
 
 **Setup:**
 ```bash
-# Install streamlit
+# Step 1: Pull the Docker image
+docker pull ghcr.io/genai4genz/smartnote:latest
+
+# Step 2: Install streamlit
 pip install streamlit
 
-# Configure your API keys
+# Step 3: Configure your API keys
 cp demo_config.template.py demo_config.py
 # Edit demo_config.py with your GITHUB_TOKEN and OPENAI_API_KEY
 
-# Run the dashboard
+# Step 4: Run the dashboard
 streamlit run demo_app.py
+
+# The app will start on http://localhost:8501
+# In GitHub Codespaces/dev containers, check the PORTS tab for the forwarded URL
 ```
 
-The dashboard provides:
-- 🎯 Repository selection from a predefined list
-- 📝 Version input (previous and current release)
-- 🚀 One-click release note generation using Docker
+**Features:**
+- 🎯 Repository selection from a predefined list of 16 repositories
+- 📝 Version input (previous and current release tags)
+- 🚀 One-click release note generation using Docker (`ghcr.io/genai4genz/smartnote:latest`)
 - 📥 Download generated notes as markdown files
 - ⚙️ Advanced options (commit grouping, significance display, GPU usage)
+- 🐳 Runs SmartNote via Docker container (no local Python dependencies needed)
 
 ## 2.6. Command Line Arguments
 

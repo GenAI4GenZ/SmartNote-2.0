@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 from docker_utils import execute_docker_command, test_docker_setup
-from config import REPO_LIST, GITHUB_TOKEN, OPENAI_API_KEY
+from demo_config import REPO_LIST, GITHUB_TOKEN, OPENAI_API_KEY
 
 
 def extract_release_note(output: str) -> str:
