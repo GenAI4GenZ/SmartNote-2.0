@@ -19,7 +19,7 @@ Introduces a new two-dimensional readability metric designed specifically for te
 A Dockerfile is provided to build a docker image with all the dependencies installed. Run the below command to build the docker image before running it with the desired variables. An example command to run the built docker image is provided below.
 
 ```bash
-docker build -t <image-name>:<image-version>
+docker build -t <image-name>:<image-version> .
 ```
 
 ### 1.1.1 Example Command
