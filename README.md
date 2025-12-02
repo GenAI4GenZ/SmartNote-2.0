@@ -16,10 +16,10 @@ Reduces verbosity while preserving essential technical detail.
 Introduces a new two-dimensional readability metric designed specifically for technical release notes.
 
 ## 1.1 Docker Image
-A Dockerfile is provided to build a docker image with all the dependencies installed. Run the below command to build the docker image before running it with the desired variables. An example command to run the built docker image is provided below.
+For ease of use, we provide a docker image with all the dependencies installed. Simply call the docker command with the desired variables. Below we provide an example and the environment variable information. For more information please see the README.md file in the replication folder.
 
 ```bash
-docker build -t <image-name>:<image-version> .
+docker pull ghcr.io/genai4genz/smartnote:latest
 ```
 
 ### 1.1.1 Example Command
@@ -27,13 +27,13 @@ docker build -t <image-name>:<image-version> .
 To generate release notes for a project run the following command. Please replace the GitHub and OpenAI keys with your own, for more information you can check the README.md file in the replication folder.
 
 ```bash
-docker run --rm -it -e SMARTNOTE_GITHUB__TOKEN="ghp_XXXXXXXXXXXXXXXX" -e SMARTNOTE_OPENAI__API_KEY="sk-XXXXXXXXXXXXXXXXX" --gpus all <image-name>:<image-version> twpayne/chezmoi --previous-release v2.52.0 --current-release v2.52.1 --group-commits --show-significance
+docker run --rm -it -e SMARTNOTE_GITHUB__TOKEN="ghp_XXXXXXXXXXXXXXXX" -e SMARTNOTE_OPENAI__API_KEY="sk-XXXXXXXXXXXXXXXXX" --gpus all ghcr.io/genai4genz/smartnote:latest twpayne/chezmoi --previous-release v2.52.0 --current-release v2.52.1 --group-commits --show-significance
 ```
 
 Add `--evaluate` option to print the metrics for that instance. For example,
 
 ```bash
-docker run --rm -it -e SMARTNOTE_GITHUB__TOKEN="ghp_XXXXXXXXXXXXXXXX" -e SMARTNOTE_OPENAI__API_KEY="sk-XXXXXXXXXXXXXXXXX" --gpus all <image-name>:<image-version> twpayne/chezmoi --previous-release v2.52.0 --current-release v2.52.1 --group-commits --show-significance --evaluate
+docker run --rm -it -e SMARTNOTE_GITHUB__TOKEN="ghp_XXXXXXXXXXXXXXXX" -e SMARTNOTE_OPENAI__API_KEY="sk-XXXXXXXXXXXXXXXXX" --gpus all ghcr.io/genai4genz/smartnote:latest twpayne/chezmoi --previous-release v2.52.0 --current-release v2.52.1 --group-commits --show-significance --evaluate
 ```
 
 ### 1.1.2 Environment Variables
