@@ -15,6 +15,8 @@ Reduces verbosity while preserving essential technical detail.
 - Developer-Centric Readability Scoring:
 Introduces a new two-dimensional readability metric designed specifically for technical release notes.
 
+Note: SmartNote 2.0 uses the same dataset that the [original SmartNote](https://github.com/osslab-pku/SmartNote) uses.
+
 ## 1.1 Docker Image
 For ease of use, we provide a docker image with all the dependencies installed. Simply call the docker command with the desired variables. Below we provide an example and the environment variable information. For more information please see the README.md file in the replication folder.
 
