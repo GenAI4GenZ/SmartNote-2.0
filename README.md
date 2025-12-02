@@ -3,23 +3,23 @@ SmartNote 2.0 is an enhanced release note generation system designed to overcome
 
 It automates release-note generation through a hybrid approach:
 
-Supervised Models (XGBoost):
+- Supervised Models (XGBoost):
 Improve project domain classification by combining README text, commit semantics, and code-context features.
 
-LLM-Powered Modules (GPT-4o):
+- LLM-Powered Modules (GPT-4o):
 Rephrase weak or low-quality commit messages and generate structured, audience-focused release notes.
 
-Token-Efficient Summarization:
+- Token-Efficient Summarization:
 Reduces verbosity while preserving essential technical detail.
 
-Developer-Centric Readability Scoring:
+- Developer-Centric Readability Scoring:
 Introduces a new two-dimensional readability metric designed specifically for technical release notes.
 
 ## 1.1 Docker Image
-For ease of use, we provide a docker image with all the dependencies installed. Simply call the docker command with the desired variables. Below we provide an example and the environment variable information. For more information please see the README.md file in the replication folder.
+A Dockerfile is provided to build a docker image with all the dependencies installed. Run the below command to build the docker image before running it with the desired variables. An example command to run the built docker image is provided below.
 
 ```bash
-docker pull ghcr.io/osslab-pku/smartnote:latest
+docker build -t <image-name>:<image-version>
 ```
 
 ### 1.1.1 Example Command
@@ -27,7 +27,13 @@ docker pull ghcr.io/osslab-pku/smartnote:latest
 To generate release notes for a project run the following command. Please replace the GitHub and OpenAI keys with your own, for more information you can check the README.md file in the replication folder.
 
 ```bash
-docker run --rm -it -e SMARTNOTE_GITHUB__TOKEN="ghp_XXXXXXXXXXXXXXXX" -e SMARTNOTE_OPENAI__API_KEY="sk-XXXXXXXXXXXXXXXXX" --gpus all ghcr.io/osslab-pku/smartnote:latest twpayne/chezmoi --previous-release v2.52.0 --current-release v2.52.1 --group-commits --show-significance
+docker run --rm -it -e SMARTNOTE_GITHUB__TOKEN="ghp_XXXXXXXXXXXXXXXX" -e SMARTNOTE_OPENAI__API_KEY="sk-XXXXXXXXXXXXXXXXX" --gpus all <image-name>:<image-version> twpayne/chezmoi --previous-release v2.52.0 --current-release v2.52.1 --group-commits --show-significance
+```
+
+Add `--evaluate` option to print the metrics for that instance. For example,
+
+```bash
+docker run --rm -it -e SMARTNOTE_GITHUB__TOKEN="ghp_XXXXXXXXXXXXXXXX" -e SMARTNOTE_OPENAI__API_KEY="sk-XXXXXXXXXXXXXXXXX" --gpus all <image-name>:<image-version> twpayne/chezmoi --previous-release v2.52.0 --current-release v2.52.1 --group-commits --show-significance --evaluate
 ```
 
 ### 1.1.2 Environment Variables
@@ -140,6 +146,7 @@ The dashboard provides:
 | `--structure-type`    | **Structure Type**: Specifies the organisational structure of the release note (referenced in Table 2.1), or leave blank for automatic.   |
 | `--min-significance`  | **Minimum Significance Threshold**: The minimum significance value required for commits to appear in the release note (default: 0.1).     |
 | `--showsignificance`  | **Show Significance Value**: Appends the significance score of each commit to the generated release note.                                 |
+| `--evaluate`          | **Enable Evaluation**: Prints metrics at the end of execution.                                                                            |
 
 
 # 3. Personalization Information
@@ -181,45 +188,4 @@ Setting the minimum significance threshold to 0 means no commits will be removed
 
 ## 3.5. Commit Grouping
 The `--group-commits` arg determines whether commits are grouped by their associated pull request. Grouping commits helps improve readability by making the release note more concise. We recommend you group commits. 
-
-## Citation
-
-You can cite the paper using any of the following formats:
-
----
-
-### 🔹 BibTeX
-```
-@article{daneshyan2025smartnote,
-  title     = {SmartNote: An LLM-Powered, Personalised Release Note Generator That Just Works},
-  author    = {Farbod Daneshyan and Runzhi He and Jianyu Wu and Minghui Zhou},
-  journal   = {Proceedings of the ACM on Software Engineering},
-  volume    = {2},
-  number    = {FSE},
-  article   = {FSE075},
-  year      = {2025},
-  month     = {July},
-  pages     = {24},
-  doi       = {10.1145/3729345},
-  url       = {https://doi.org/10.1145/3729345}
-}
-```
----
-
-### 🔹 APA
-```
-Daneshyan, F., He, R., Wu, J., & Zhou, M. (2025). *SmartNote: An LLM-powered, personalised release note generator that just works*. _Proceedings of the ACM on Software Engineering_, 2(FSE), Article FSE075. https://doi.org/10.1145/3729345
-```
----
-
-### 🔹 MLA
-```
-Daneshyan, Farbod, et al. "SmartNote: An LLM-Powered, Personalised Release Note Generator That Just Works." _Proceedings of the ACM on Software Engineering_, vol. 2, no. FSE, 2025, Article FSE075. https://doi.org/10.1145/3729345
-```
----
-
-### 🔹 IEEE
-```
-F. Daneshyan, R. He, J. Wu, and M. Zhou, "SmartNote: An LLM-Powered, Personalised Release Note Generator That Just Works," _Proc. ACM Softw. Eng._, vol. 2, no. FSE, Art. FSE075, Jul. 2025, pp. 1–24. https://doi.org/10.1145/3729345
-```
 
